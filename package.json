@@ -1,0 +1,9 @@
+{
+  "name": "oohttprequest",
+  "version": "0.0.1",
+  "browser": {
+    "https": false,
+    "url": false
+  },
+  "private": true
+}
