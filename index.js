@@ -1,16 +1,40 @@
 'use strict';
 
+const TIMEOUT = 5000;
+
 // node specific imports required to handle https requests
-const isNode = typeof module !== 'undefined' && module.exports;
-let https, url;
-if (isNode) {
+let https, http, url;
+if (!process.browser) {
 
 	https = require('https');
+	http = require('http');
 	url = require('url');
 
 }
 
-class HttpRequest {
+class OoHttpRequestBase {
+
+	constructor(obj) {
+
+		this.headers = {};
+
+		if (obj) {
+			Object.assign(this, obj);
+		}
+
+	}
+
+	request(url, method) {
+
+		let req = new OoHttpRequest(url, method);
+		req.headers = this.headers;
+		return req;
+
+	}
+
+}
+
+class OoHttpRequest {
 
 	constructor(method, url) {
 		this.open(method, url);
@@ -49,18 +73,39 @@ class HttpRequest {
 
 	}
 
+	toString(data) {
+
+		return this.send(data).then((data) => {
+			return "" + data;
+		});
+
+	}
+
+	toJson(data) {
+
+		return this.send(data).then((data) => {
+			return JSON.parse(data);
+		});
+
+	}
+
 	sendBrowser(data) {
 
 		return new Promise((resolve, reject) => {
 
 			//setup a xmlhttprequest to handle the http request
 			let req = new XMLHttpRequest();
-			req.open(this.method || HttpRequest.defaults.method, this.url);
+			req.open(this.method || OoHttpRequest.defaults.method, this.url);
+			req.timeout = TIMEOUT;
 
 			//set the headers
-			let headers = Object.assign({}, HttpRequest.defaults.headers, this.headers);
+			let headers = Object.assign({}, OoHttpRequest.defaults.headers, this.headers);
 			Object.keys(headers).forEach((headerName) => {
-				req.setRequestHeader(headerName, headers[headerName]);
+
+				if (typeof headers[headerName] === 'string' || typeof headers[headerName] === 'number') {
+					req.setRequestHeader(headerName, headers[headerName]);
+				}
+
 			});
 
 			req.onerror = (event) => {
@@ -88,10 +133,15 @@ class HttpRequest {
 		return new Promise((resolve, reject) => {
 
 			let options = url.parse(this.url);
-			options.method = this.method || HttpRequest.defaults.method;
-			options.headers = Object.assign({}, HttpRequest.defaults.headers, this.headers);
+			options.method = this.method || OoHttpRequest.defaults.method;
+			options.headers = Object.assign({}, OoHttpRequest.defaults.headers, this.headers);
 
-			let req = https.request(options, (res) => {
+			let protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
+			if (protocolName !== 'http' && protocolName !== 'https') {
+				throw new Error(`unsupported protocol "${protocolName}"`);
+			}
+
+			let req = (protocolName === 'https' ? https : http).request(options, (res) => {
 
 				res.setEncoding('utf8');
 				let data = '';
@@ -109,7 +159,13 @@ class HttpRequest {
 
 				});
 
-			}).on('error', (err) => {
+			});
+
+			req.setTimeout(TIMEOUT, () => {
+				req.abort();
+			});
+
+			req.on('error', (err) => {
 				reject(err);
 			});
 
@@ -133,21 +189,21 @@ class HttpRequest {
 			data = JSON.stringify(data);
 		}
 
-		if (isNode) {
-			return this.sendNode(data);
-		} else {
+		if (process.browser) {
 			return this.sendBrowser(data);
+		} else {
+			return this.sendNode(data);
 		}
 
 	}
 
 }
 
-HttpRequest.defaults = {
+OoHttpRequest.defaults = {
 	headers: {
 		'content-type': 'application/json'
 	},
 	method: 'GET'
 };
 
-module.exports = HttpRequest;
+module.exports = {Request: OoHttpRequest, Base: OoHttpRequestBase};
