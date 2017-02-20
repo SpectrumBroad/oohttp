@@ -1,5 +1,6 @@
 {
-	"name": "oohttprequest",
+	"name": "oohttp",
+	"description": "object-oriented http(s) request handler",
 	"version": "0.0.1",
 	"devDependencies": {
 		"browserify": "*",

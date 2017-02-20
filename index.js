@@ -12,7 +12,7 @@ if (!process.browser) {
 
 }
 
-class OoHttpRequestBase {
+class Base {
 
 	constructor(obj) {
 
@@ -26,7 +26,7 @@ class OoHttpRequestBase {
 
 	request(url, method) {
 
-		let req = new OoHttpRequest(url, method);
+		let req = new Request(url, method);
 		req.headers = this.headers;
 		return req;
 
@@ -34,7 +34,7 @@ class OoHttpRequestBase {
 
 }
 
-class OoHttpRequest {
+class Request {
 
 	constructor(method, url) {
 		this.open(method, url);
@@ -95,11 +95,11 @@ class OoHttpRequest {
 
 			//setup a xmlhttprequest to handle the http request
 			let req = new XMLHttpRequest();
-			req.open(this.method || OoHttpRequest.defaults.method, this.url);
+			req.open(this.method || Request.defaults.method, this.url);
 			req.timeout = TIMEOUT;
 
 			//set the headers
-			let headers = Object.assign({}, OoHttpRequest.defaults.headers, this.headers);
+			let headers = Object.assign({}, Request.defaults.headers, this.headers);
 			Object.keys(headers).forEach((headerName) => {
 
 				if (typeof headers[headerName] === 'string' || typeof headers[headerName] === 'number') {
@@ -133,8 +133,8 @@ class OoHttpRequest {
 		return new Promise((resolve, reject) => {
 
 			let options = url.parse(this.url);
-			options.method = this.method || OoHttpRequest.defaults.method;
-			options.headers = Object.assign({}, OoHttpRequest.defaults.headers, this.headers);
+			options.method = this.method || Request.defaults.method;
+			options.headers = Object.assign({}, Request.defaults.headers, this.headers);
 
 			let protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
 			if (protocolName !== 'http' && protocolName !== 'https') {
@@ -199,11 +199,11 @@ class OoHttpRequest {
 
 }
 
-OoHttpRequest.defaults = {
+Request.defaults = {
 	headers: {
 		'content-type': 'application/json'
 	},
 	method: 'GET'
 };
 
-module.exports = {Request: OoHttpRequest, Base: OoHttpRequestBase};
+module.exports = {Request: Request, Base: Base};
