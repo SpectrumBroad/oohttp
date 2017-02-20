@@ -28,6 +28,5 @@
 		"https": false,
 		"http": false,
 		"url": false
-	},
-	"private": true
+	}
 }
