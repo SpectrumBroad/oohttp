@@ -1,7 +1,19 @@
 {
 	"name": "oohttp",
-	"description": "object-oriented http(s) request handler",
 	"version": "0.0.1",
+	"description": "object-oriented http(s) request handler",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/spectrumbroad/oohttp"
+	},
+	"bugs": {
+		"url": "https://github.com/spectrumbroad/oohttp/issues"
+	},
+	"keywords": [
+		"http",
+		"https"
+	],
 	"devDependencies": {
 		"browserify": "*",
 		"babel-preset-es2015": "*",
