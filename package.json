@@ -1,6 +1,6 @@
 {
 	"name": "oohttp",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "object-oriented http(s) request handler",
 	"license": "MIT",
 	"repository": {
@@ -14,16 +14,6 @@
 		"http",
 		"https"
 	],
-	"devDependencies": {
-		"browserify": "*",
-		"babel-preset-es2015": "*",
-		"babel-preset-stage-0": "*",
-		"gulp": "*",
-		"gulp-babel": "*",
-		"vinyl-source-stream": "*",
-		"gulp-nodemon": "*",
-		"gulp-rename": "*"
-	},
 	"browser": {
 		"https": false,
 		"http": false,

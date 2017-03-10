@@ -1,14 +1,41 @@
 'use strict';
 
-const TIMEOUT = 5000;
-
 // node specific imports required to handle https requests
 let https, http, url;
-if (!process.browser) {
+if (typeof window === 'undefined') {
 
 	https = require('https');
 	http = require('http');
 	url = require('url');
+
+}
+
+/**
+ * returns the byte length of an utf-8 encoded string
+ * from http://stackoverflow.com/questions/5515869/string-length-in-bytes-in-javascript
+ * @param {String} str the string to calculate the byte length of
+ * @returns {Number} the bytelength
+ */
+function utf8ByteLength(str) {
+
+	let s = str.length;
+	for (let i = str.length - 1; i >= 0; i--) {
+
+		let code = str.charCodeAt(i);
+		if (code > 0x7f && code <= 0x7ff) {
+			s++;
+		} else if (code > 0x7ff && code <= 0xffff) {
+			s += 2;
+		}
+
+		//trail surrogate
+		if (code >= 0xDC00 && code <= 0xDFFF) {
+			i--;
+		}
+
+	}
+
+	return s;
 
 }
 
@@ -17,6 +44,9 @@ class Base {
 	constructor(obj) {
 
 		this.headers = {};
+		this.rejectUnauthorized = null;
+		this.timeout = null;
+		this.autoContentLength = null;
 
 		if (obj) {
 			Object.assign(this, obj);
@@ -27,7 +57,12 @@ class Base {
 	request(url, method) {
 
 		let req = new Request(url, method);
-		req.headers = this.headers;
+
+		Object.assign(req.headers, this.headers);
+		req.rejectUnauthorized = this.rejectUnauthorized;
+		req.timeout = this.timeout;
+		req.autoContentLength = this.autoContentLength;
+
 		return req;
 
 	}
@@ -76,7 +111,7 @@ class Request {
 	toString(data) {
 
 		return this.send(data).then((data) => {
-			return "" + data;
+			return '' + data;
 		});
 
 	}
@@ -96,7 +131,7 @@ class Request {
 			//setup a xmlhttprequest to handle the http request
 			let req = new XMLHttpRequest();
 			req.open(this.method || Request.defaults.method, this.url);
-			req.timeout = TIMEOUT;
+			req.timeout = this.timeout || Request.defaults.timeout;
 
 			//set the headers
 			let headers = Object.assign({}, Request.defaults.headers, this.headers);
@@ -117,7 +152,10 @@ class Request {
 				if (req.status >= 200 && req.status < 300) {
 					resolve(req.responseText);
 				} else {
-					reject(req.status);
+					reject({
+						statusCode: req.status,
+						data: req.responseText
+					});
 				}
 
 			};
@@ -135,6 +173,7 @@ class Request {
 			let options = url.parse(this.url);
 			options.method = this.method || Request.defaults.method;
 			options.headers = Object.assign({}, Request.defaults.headers, this.headers);
+			options.rejectUnauthorized = typeof this.rejectUnauthorized === 'boolean' ? this.rejectUnauthorized : Request.defaults.rejectUnauthorized;
 
 			let protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
 			if (protocolName !== 'http' && protocolName !== 'https') {
@@ -154,14 +193,17 @@ class Request {
 					if (res.statusCode >= 200 && res.statusCode < 300) {
 						resolve(data);
 					} else {
-						reject(res.statusCode);
+						reject({
+							statusCode: res.statusCode,
+							data: data
+						});
 					}
 
 				});
 
 			});
 
-			req.setTimeout(TIMEOUT, () => {
+			req.setTimeout(this.timeout || Request.defaults.timeout, () => {
 				req.abort();
 			});
 
@@ -186,13 +228,39 @@ class Request {
 	send(data) {
 
 		if (data && typeof data !== 'string') {
-			data = JSON.stringify(data);
+
+			let contentType = this.headers['content-type'] || Request.defaults.headers['content-type'];
+			if (contentType === 'application/json') {
+				data = JSON.stringify(data);
+			} else {
+
+				let dataStr = '';
+				for (let name in data) {
+
+					if (dataStr.length) {
+						dataStr += '&';
+					}
+					dataStr += `${encodeURIComponent(name)}=${encodeURIComponent(data[name])}`;
+
+				}
+				data = dataStr;
+
+			}
+
 		}
 
-		if (process.browser) {
-			return this.sendBrowser(data);
-		} else {
+		//auto setting of content-length header
+		if (data && !this.headers['content-length'] &&
+			((typeof this.autoContentLength !== 'boolean' && Request.defaults.autoContentLength === true) ||
+				this.autoContentLength === true)
+		) {
+			this.headers['content-length'] = utf8ByteLength(data);
+		}
+
+		if (typeof window === 'undefined') {
 			return this.sendNode(data);
+		} else {
+			return this.sendBrowser(data);
 		}
 
 	}
@@ -203,7 +271,13 @@ Request.defaults = {
 	headers: {
 		'content-type': 'application/json'
 	},
-	method: 'GET'
+	method: 'GET',
+	timeout: 5000,
+	rejectUnauthorized: true,
+	autoContentLength: false
 };
 
-module.exports = {Request: Request, Base: Base};
+module.exports = {
+	Request: Request,
+	Base: Base
+};
