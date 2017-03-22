@@ -54,9 +54,9 @@ class Base {
 
 	}
 
-	request(url, method) {
+	request(method, url) {
 
-		let req = new Request(url, method);
+		let req = new Request(method, url);
 
 		Object.assign(req.headers, this.headers);
 		req.rejectUnauthorized = this.rejectUnauthorized;
