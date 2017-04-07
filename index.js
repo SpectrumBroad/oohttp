@@ -147,6 +147,10 @@ class Request {
 				reject(event);
 			};
 
+			req.ontimeout = (event) => {
+				reject(event);
+			};
+
 			req.onload = (event) => {
 
 				if (req.status >= 200 && req.status < 300) {
@@ -204,7 +208,10 @@ class Request {
 			});
 
 			req.setTimeout(this.timeout || Request.defaults.timeout, () => {
+
 				req.abort();
+				reject('timeout');
+
 			});
 
 			req.on('error', (err) => {
