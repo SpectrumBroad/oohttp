@@ -279,7 +279,7 @@ Request.defaults = {
 		'content-type': 'application/json'
 	},
 	method: 'GET',
-	timeout: 5000,
+	timeout: 60000,
 	rejectUnauthorized: true,
 	autoContentLength: false
 };
