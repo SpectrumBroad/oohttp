@@ -18,5 +18,12 @@
 		"https": false,
 		"http": false,
 		"url": false
+	},
+	"devDependencies": {
+		"eslint": "*",
+		"eslint-plugin-import": "*",
+		"eslint-config-airbnb": "*",
+		"eslint-plugin-jsx-a11y": "*",
+		"eslint-plugin-react": "*"
 	}
 }
