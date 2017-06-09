@@ -1,6 +1,6 @@
 {
 	"name": "oohttp",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"description": "object-oriented http(s) request handler",
 	"license": "MIT",
 	"repository": {

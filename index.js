@@ -1,290 +1,550 @@
 'use strict';
 
-// node specific imports required to handle https requests
-let https, http, url;
+// node specific imports required to handle http(s) requests
+let https;
+let http;
+let url;
 if (typeof window === 'undefined') {
-
-	https = require('https');
-	http = require('http');
-	url = require('url');
-
+  https = require('https');
+  http = require('http');
+  url = require('url');
 }
 
 /**
- * returns the byte length of an utf-8 encoded string
- * from http://stackoverflow.com/questions/5515869/string-length-in-bytes-in-javascript
- * @param {String} str the string to calculate the byte length of
- * @returns {Number} the bytelength
+ * Returns the byte length of an utf-8 encoded string.
+ * From http://stackoverflow.com/questions/5515869/string-length-in-bytes-in-javascript
+ * @param {String} str String to calculate the byte length of.
+ * @returns {Number} The bytelength.
  */
 function utf8ByteLength(str) {
+  let s = str.length;
+  let i;
+  for (i = str.length - 1; i >= 0; i -= 1) {
+    const code = str.charCodeAt(i);
+    if (code > 0x7f && code <= 0x7ff) {
+      s += 1;
+    } else if (code > 0x7ff && code <= 0xffff) {
+      s += 2;
+    }
 
-	let s = str.length;
-	for (let i = str.length - 1; i >= 0; i--) {
+    // trail surrogate
+    if (code >= 0xDC00 && code <= 0xDFFF) {
+      i -= 1;
+    }
+  }
 
-		let code = str.charCodeAt(i);
-		if (code > 0x7f && code <= 0x7ff) {
-			s++;
-		} else if (code > 0x7ff && code <= 0xffff) {
-			s += 2;
-		}
+  return s;
+}
 
-		//trail surrogate
-		if (code >= 0xDC00 && code <= 0xDFFF) {
-			i--;
-		}
+class Url {
 
-	}
+  constructor(obj) {
+    this.protocol = null;
+    this.auth = null;
+    this.hostname = null;
+    this.port = null;
+    this.pathname = null;
+    this.query = {};
+    this.hash = null;
 
-	return s;
+    if (obj) {
+      Object.assign(this, Url.parse(obj));
+    }
+  }
+
+  static parse(obj) {
+    const returnObj = {};
+    if (typeof obj === 'string') {
+      returnObj.origStr = obj;
+      let remainingPath = obj;
+
+      const protocolDividerIndex = remainingPath.indexOf('://');
+      if (protocolDividerIndex > -1) {
+        returnObj.protocol = obj.substring(0, protocolDividerIndex) || null;
+        remainingPath = obj.substring(protocolDividerIndex + 3);
+      }
+
+      const portDividerIndex = remainingPath.indexOf(':');
+      if (portDividerIndex > -1) {
+        returnObj.hostname = remainingPath.substring(0, portDividerIndex) || null;
+        remainingPath = remainingPath.substring(portDividerIndex + 1);
+      }
+
+      const hashDividerIndex = remainingPath.lastIndexOf('#');
+      if (hashDividerIndex > -1) {
+        returnObj.hash = remainingPath.substring(hashDividerIndex + 1) || null;
+        remainingPath = remainingPath.substring(0, hashDividerIndex);
+      }
+
+      const queryStringDividerIndex = remainingPath.lastIndexOf('?');
+      if (queryStringDividerIndex > -1) {
+        returnObj.search = remainingPath.substring(queryStringDividerIndex) || null;
+        remainingPath = remainingPath.substring(0, queryStringDividerIndex);
+        if (returnObj.search) {
+          returnObj.query = this.parseQueryString(returnObj.search);
+        }
+      }
+
+      const pathDividerIndex = remainingPath.indexOf('/');
+      if (portDividerIndex > -1) {
+        if (pathDividerIndex > -1) {
+          returnObj.port = +remainingPath.substring(0, pathDividerIndex);
+          remainingPath = remainingPath.substring(pathDividerIndex);
+          returnObj.pathname = remainingPath;
+        } else {
+          returnObj.port = +remainingPath;
+        }
+      } else if (protocolDividerIndex === -1 || pathDividerIndex === 0) {
+        returnObj.pathname = remainingPath || null;
+      } else if (pathDividerIndex > -1) {
+        returnObj.hostname = remainingPath.substring(0, pathDividerIndex) || null;
+        returnObj.pathname = remainingPath.substring(pathDividerIndex);
+      } else {
+        returnObj.hostname = remainingPath || null;
+      }
+    } else {
+      const search = obj.search;
+      let query = obj.query;
+      const path = obj.path;
+      let pathname = obj.pathname;
+
+      // path
+      if (path && !pathname && !search && !query) {
+        if (path.includes('?')) {
+          const querySplit = path.split('?');
+          pathname = querySplit[0];
+          query = querySplit[1];
+        } else {
+          pathname = path;
+        }
+      }
+
+      // querystring
+      if (search && !query) {
+        returnObj.query = this.parseQueryString(search);
+      }
+
+      // protocol
+      if (typeof obj.protocol === 'string') {
+        if (obj.protocol.slice(-1) === ':') {
+          returnObj.protocol = obj.protocol.substring(0, obj.protocol.length - 1);
+        } else {
+          returnObj.protocol = obj.protocol;
+        }
+      }
+
+      returnObj.hostname = obj.hostname || null;
+      returnObj.port = obj.port || null;
+      returnObj.pathname = obj.pathname || null;
+      returnObj.query = obj.query || {};
+    }
+
+    return returnObj;
+  }
+
+  static parseQueryString(search) {
+    if (!search) {
+      return {};
+    }
+
+    const query = {};
+    let searchSplit = search;
+    if (searchSplit.charAt() === '?') {
+      searchSplit = searchSplit.substring(1);
+    }
+    searchSplit = searchSplit.split('&');
+    let queryName;
+    let queryValue;
+    let querySplit;
+    for (let i = 0; i < searchSplit.length; i += 1) {
+      querySplit = searchSplit[i].split('=');
+      if (querySplit.length === 2) {
+        queryName = querySplit[0];
+        queryValue = querySplit[1];
+        if (typeof query[queryName] === 'string') {
+          query[queryName] = [query[queryName], queryValue];
+        } else if (Array.isArray(query[queryName])) {
+          query[queryName].push(queryValue);
+        } else {
+          query[queryName] = queryValue;
+        }
+      }
+    }
+    return query;
+  }
+
+  /**
+  * Merges another (base-)url into this url.
+  * This url is dominant, therefor all values in the current url will be kept.
+  * Only new values (querystring parts, missing protocol, etc) will be added.
+  * @param {Url} baseUrl The url to merge from.
+  */
+  mergeFrom(baseUrl) {
+    if ((baseUrl instanceof Base) || (baseUrl instanceof Request)) {
+      baseUrl = baseUrl.url;
+    }
+
+    if (typeof baseUrl === 'string') {
+      baseUrl = new Url(baseUrl);
+    }
+
+    if (!baseUrl) {
+      return;
+    }
+
+    if (!this.protocol && baseUrl.protocol) {
+      this.protocol = baseUrl.protocol;
+    }
+
+    if (!this.auth && baseUrl.auth) {
+      this.auth = baseUrl.auth;
+    }
+
+    if (!this.hostname && baseUrl.hostname) {
+      this.hostname = baseUrl.hostname;
+    }
+
+    if (!this.port && baseUrl.port) {
+      this.port = baseUrl.port;
+    }
+
+    if (!this.pathname && baseUrl.pathname) {
+      this.pathname = baseUrl.pathname;
+    }
+
+    // querystring
+    if (baseUrl.query) {
+      const baseQueryKeys = Object.keys(baseUrl.query);
+      if (baseQueryKeys.length) {
+        let baseQueryName;
+        let baseQueryValue;
+        for (let i = 0; i < baseQueryKeys.length; i += 1) {
+          baseQueryName = baseQueryKeys[i];
+          baseQueryValue = baseUrl.query[baseQueryName];
+          if (!this.query[baseQueryName]) {
+            this.query[baseQueryName] = baseQueryValue;
+          } else {
+            if (!Array.isArray(this.query[baseQueryName])) {
+              this.query[baseQueryName] = [this.query[baseQueryName]];
+            }
+            if (Array.isArray(baseQueryValue)) {
+              for (let j = 0; j < baseQueryValue.length; j += 1) {
+                this.query[baseQueryName].push(baseQueryValue[j]);
+              }
+            } else {
+              this.query[baseQueryName].push(baseQueryValue);
+            }
+          }
+        }
+      }
+    }
+
+    if (!this.hash && baseUrl.hash) {
+      this.hash = baseUrl.hash;
+    }
+  }
+
+  /**
+  * Returns a string representation of the url.
+  * Omits missing values, no defaults are applied here.
+  * The port number is left out if the related protocol for that port is used.
+  * I.e: if the protocol equals 'https' and port 443 is specified,
+  * the port will not be part of the returned string.
+  * @returns {String} The url string.
+  */
+  toString() {
+    let str = '';
+
+    if (this.protocol) {
+      str += `${this.protocol}://`;
+    }
+
+    if (this.auth) {
+      str += `${this.auth}@`;
+    }
+
+    // hostname
+    if (this.hostname) {
+      str += `${this.hostname}`;
+      if (this.port &&
+        (!this.protocol || Url.protocolPortNumbers[this.protocol] !== this.port)
+      ) {
+        str += `:${this.port}`;
+      }
+    }
+
+    if (this.pathname) {
+      str += this.pathname;
+    }
+
+    // querystring
+    if (this.query) {
+      const queryKeys = Object.keys(this.query);
+      if (queryKeys.length) {
+        str += '?';
+        let queryName;
+        let queryValues;
+        for (let i = 0; i < queryKeys.length; i += 1) {
+          queryName = queryKeys[i];
+          queryValues = this.query[queryName];
+          if (Array.isArray(queryValues)) {
+            for (let j = 0; j < queryValues.length; j += 1) {
+              str += `${(i || j) ? '&' : ''}${encodeURIComponent(queryName)}=${encodeURIComponent(queryValues[j])}`;
+            }
+          } else {
+            str += `${i ? '&' : ''}${encodeURIComponent(queryName)}=${encodeURIComponent(queryValues)}`;
+          }
+        }
+      }
+    }
+
+    // hash
+    if (this.hash) {
+      str += `#${this.hash}`;
+    }
+
+    return str;
+  }
 
 }
 
-class Base {
-
-	constructor(obj) {
-
-		this.headers = {};
-		this.rejectUnauthorized = null;
-		this.timeout = null;
-		this.autoContentLength = null;
-
-		if (obj) {
-			Object.assign(this, obj);
-		}
-
-	}
-
-	request(method, url) {
-
-		let req = new Request(method, url);
-
-		Object.assign(req.headers, this.headers);
-		req.rejectUnauthorized = this.rejectUnauthorized;
-		req.timeout = this.timeout;
-		req.autoContentLength = this.autoContentLength;
-
-		return req;
-
-	}
-
-}
+Url.protocolPortNumbers = {
+  ftp: 21,
+  http: 80,
+  https: 443,
+  ws: 80,
+  wss: 443
+};
 
 class Request {
 
-	constructor(method, url) {
-		this.open(method, url);
-	}
+  constructor(method, reqUrl) {
+    this.open(method, reqUrl);
+  }
 
-	open(method, url) {
+  open(method, reqUrl) {
+    this.method = method;
+    this.url = reqUrl;
+    this.headers = {};
 
-		this.method = method;
-		this.url = url;
-		this.headers = {};
+    if (this.url && !(this.url instanceof Url)) {
+      this.url = new Url(this.url);
+    }
+  }
 
-	}
+  /**
+  * Parses the result through JSON and passes it to the given constructor.
+  * @param {Constructor} Constr The constructor
+  * @param {Object} [data] An object to send along with the request.
+  * If the content-type header is set to 'application/json',
+  * than this data will be stringified through JSON.stringify().
+  * Otherwise the data will be parsed as an url encoded form string
+  * from the first-level key/value pairs.
+  * @returns {Promise.<Constr>} Returns a Promise with the constructed object on success.
+  */
+  toObject(Constr, data) {
+    return this.send(data)
+      .then(res => new Constr(JSON.parse(res)));
+  }
 
-	toObject(Constr, data) {
+  toObjectArray(Constr, data) {
+    return this.send(data)
+      .then((res) => {
+        const json = JSON.parse(res);
+        const arr = [];
 
-		return this.send(data).then((data) => {
-			return new Constr(JSON.parse(data));
-		});
+        let i;
+        for (i = 0; i < json.length; i += 1) {
+          arr.push(new Constr(json[i]));
+        }
 
-	}
+        return arr;
+      });
+  }
 
-	toObjectArray(Constr, data) {
+  toString(data) {
+    return this.send(data)
+      .then(res => `${res}`);
+  }
 
-		return this.send(data).then((data) => {
+  toJson(data) {
+    return this.send(data)
+      .then(res => JSON.parse(res));
+  }
 
-			let json = JSON.parse(data);
-			let arr = [];
+  sendBrowser(data) {
+    return new Promise((resolve, reject) => {
+      // setup a xmlhttprequest to handle the http request
+      const req = new XMLHttpRequest();
+      req.open(this.method || Request.defaults.method, this.url.toString());
+      req.timeout = this.timeout || Request.defaults.timeout;
 
-			json.forEach((obj) => {
-				arr.push(new Constr(obj));
-			});
+      // set the headers
+      const headers = Object.assign({}, Request.defaults.headers, this.headers);
+      Object.keys(headers).forEach((headerName) => {
+        if (typeof headers[headerName] === 'string' || typeof headers[headerName] === 'number') {
+          req.setRequestHeader(headerName, headers[headerName]);
+        }
+      });
 
-			return arr;
+      req.onerror = (event) => {
+        reject(event);
+      };
 
-		});
+      req.ontimeout = (event) => {
+        reject(event);
+      };
 
-	}
+      req.onload = () => {
+        if (req.status >= 200 && req.status < 300) {
+          resolve(req.responseText);
+        } else {
+          const err = new Error('Unsuccessful statuscode returned');
+          err.statusCode = req.status;
+          err.data = req.responseText;
+          reject(err);
+        }
+      };
 
-	toString(data) {
+      req.send(data);
+    });
+  }
 
-		return this.send(data).then((data) => {
-			return '' + data;
-		});
+  sendNode(data) {
+    return new Promise((resolve, reject) => {
+      const options = url.parse(this.url.toString());
+      options.method = this.method || Request.defaults.method;
+      options.headers = Object.assign({}, Request.defaults.headers, this.headers);
+      options.rejectUnauthorized = typeof this.rejectUnauthorized === 'boolean' ? this.rejectUnauthorized : Request.defaults.rejectUnauthorized;
 
-	}
+      const protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
+      if (protocolName !== 'http' && protocolName !== 'https') {
+        throw new Error(`unsupported protocol "${protocolName}"`);
+      }
 
-	toJson(data) {
+      const req = (protocolName === 'https' ? https : http).request(options, (res) => {
+        res.setEncoding('utf8');
+        let resData = '';
+        res.on('data', (chunk) => {
+          resData += chunk;
+        });
 
-		return this.send(data).then((data) => {
-			return JSON.parse(data);
-		});
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(resData);
+          } else {
+            const err = new Error('Unsuccessful statuscode returned');
+            err.statusCode = res.statusCode;
+            err.data = resData;
+            reject(err);
+          }
+        });
+      });
 
-	}
+      req.setTimeout(this.timeout || Request.defaults.timeout, () => {
+        req.abort();
+        reject(new Error('timeout'));
+      });
 
-	sendBrowser(data) {
+      req.on('error', (err) => {
+        reject(err);
+      });
 
-		return new Promise((resolve, reject) => {
+      if (data) {
+        req.write(data, () => {
+          req.end();
+        });
+      } else {
+        req.end();
+      }
+    });
+  }
 
-			//setup a xmlhttprequest to handle the http request
-			let req = new XMLHttpRequest();
-			req.open(this.method || Request.defaults.method, this.url);
-			req.timeout = this.timeout || Request.defaults.timeout;
+  send(data) {
+    if (data && typeof data !== 'string') {
+      const contentType = this.headers['content-type'] || Request.defaults.headers['content-type'];
+      if (contentType === 'application/json') {
+        data = JSON.stringify(data);
+      } else {
+        let dataStr = '';
+        for (const name in data) {
+          if (dataStr.length) {
+            dataStr += '&';
+          }
+          dataStr += `${encodeURIComponent(name)}=${encodeURIComponent(data[name])}`;
+        }
+        data = dataStr;
+      }
+    }
 
-			//set the headers
-			let headers = Object.assign({}, Request.defaults.headers, this.headers);
-			Object.keys(headers).forEach((headerName) => {
+    // auto setting of content-length header
+    if (data && !this.headers['content-length'] &&
+      ((typeof this.autoContentLength !== 'boolean' && Request.defaults.autoContentLength === true) ||
+      this.autoContentLength === true)
+    ) {
+      this.headers['content-length'] = utf8ByteLength(data);
+    }
 
-				if (typeof headers[headerName] === 'string' || typeof headers[headerName] === 'number') {
-					req.setRequestHeader(headerName, headers[headerName]);
-				}
-
-			});
-
-			req.onerror = (event) => {
-				reject(event);
-			};
-
-			req.ontimeout = (event) => {
-				reject(event);
-			};
-
-			req.onload = (event) => {
-
-				if (req.status >= 200 && req.status < 300) {
-					resolve(req.responseText);
-				} else {
-					reject({
-						statusCode: req.status,
-						data: req.responseText
-					});
-				}
-
-			};
-
-			req.send(data);
-
-		});
-
-	}
-
-	sendNode(data) {
-
-		return new Promise((resolve, reject) => {
-
-			let options = url.parse(this.url);
-			options.method = this.method || Request.defaults.method;
-			options.headers = Object.assign({}, Request.defaults.headers, this.headers);
-			options.rejectUnauthorized = typeof this.rejectUnauthorized === 'boolean' ? this.rejectUnauthorized : Request.defaults.rejectUnauthorized;
-
-			let protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
-			if (protocolName !== 'http' && protocolName !== 'https') {
-				throw new Error(`unsupported protocol "${protocolName}"`);
-			}
-
-			let req = (protocolName === 'https' ? https : http).request(options, (res) => {
-
-				res.setEncoding('utf8');
-				let data = '';
-				res.on('data', (chunk) => {
-					data += chunk;
-				});
-
-				res.on('end', () => {
-
-					if (res.statusCode >= 200 && res.statusCode < 300) {
-						resolve(data);
-					} else {
-						reject({
-							statusCode: res.statusCode,
-							data: data
-						});
-					}
-
-				});
-
-			});
-
-			req.setTimeout(this.timeout || Request.defaults.timeout, () => {
-
-				req.abort();
-				reject('timeout');
-
-			});
-
-			req.on('error', (err) => {
-				reject(err);
-			});
-
-			if (data) {
-
-				req.write(data, () => {
-					req.end();
-				});
-
-			} else {
-				req.end();
-			}
-
-		});
-
-	}
-
-	send(data) {
-
-		if (data && typeof data !== 'string') {
-
-			let contentType = this.headers['content-type'] || Request.defaults.headers['content-type'];
-			if (contentType === 'application/json') {
-				data = JSON.stringify(data);
-			} else {
-
-				let dataStr = '';
-				for (let name in data) {
-
-					if (dataStr.length) {
-						dataStr += '&';
-					}
-					dataStr += `${encodeURIComponent(name)}=${encodeURIComponent(data[name])}`;
-
-				}
-				data = dataStr;
-
-			}
-
-		}
-
-		//auto setting of content-length header
-		if (data && !this.headers['content-length'] &&
-			((typeof this.autoContentLength !== 'boolean' && Request.defaults.autoContentLength === true) ||
-				this.autoContentLength === true)
-		) {
-			this.headers['content-length'] = utf8ByteLength(data);
-		}
-
-		if (typeof window === 'undefined') {
-			return this.sendNode(data);
-		} else {
-			return this.sendBrowser(data);
-		}
-
-	}
+    if (typeof window === 'undefined') {
+      return this.sendNode(data);
+    }
+    return this.sendBrowser(data);
+  }
 
 }
 
 Request.defaults = {
-	headers: {
-		'content-type': 'application/json'
-	},
-	method: 'GET',
-	timeout: 60000,
-	rejectUnauthorized: true,
-	autoContentLength: false
+  headers: {
+    'content-type': 'application/json'
+  },
+  method: 'GET',
+  timeout: 60000,
+  rejectUnauthorized: true,
+  autoContentLength: false
 };
 
+class Base {
+
+  constructor(obj) {
+    this.headers = {};
+    this.rejectUnauthorized = null;
+    this.timeout = null;
+    this.autoContentLength = null;
+
+    if (typeof obj === 'string' || (obj instanceof Url)) {
+      this.url = obj;
+    } else if (obj) {
+      Object.assign(this, obj);
+    }
+
+    if (this.url && !(this.url instanceof Url)) {
+      this.url = new Url(this.url);
+    }
+  }
+
+  request(method, reqUrl) {
+    if (!(reqUrl instanceof Url)) {
+      reqUrl = new Url(reqUrl);
+    }
+    let baseUrl = this.url;
+    if (!(baseUrl instanceof Url)) {
+      baseUrl = new Url(baseUrl);
+    }
+    reqUrl.mergeFrom(baseUrl);
+    const req = new Request(method, reqUrl.toString());
+
+    Object.assign(req.headers, this.headers);
+    req.rejectUnauthorized = this.rejectUnauthorized;
+    req.timeout = this.timeout;
+    req.autoContentLength = this.autoContentLength;
+
+    return req;
+  }
+
+}
+
 module.exports = {
-	Request: Request,
-	Base: Base
+  Request,
+  Base,
+  Url
 };
