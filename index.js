@@ -37,7 +37,6 @@ function utf8ByteLength(str) {
 }
 
 class Url {
-
   constructor(obj) {
     this.protocol = null;
     this.auth = null;
@@ -305,7 +304,6 @@ class Url {
 
     return str;
   }
-
 }
 
 Url.protocolPortNumbers = {
@@ -317,7 +315,6 @@ Url.protocolPortNumbers = {
 };
 
 class Request {
-
   constructor(method, reqUrl) {
     this.open(method, reqUrl);
   }
@@ -344,32 +341,32 @@ class Request {
   */
   toObject(Constr, data) {
     return this.send(data)
-      .then(res => new Constr(JSON.parse(res)));
+    .then(res => new Constr(JSON.parse(res)));
   }
 
   toObjectArray(Constr, data) {
     return this.send(data)
-      .then((res) => {
-        const json = JSON.parse(res);
-        const arr = [];
+    .then((res) => {
+      const json = JSON.parse(res);
+      const arr = [];
 
-        let i;
-        for (i = 0; i < json.length; i += 1) {
-          arr.push(new Constr(json[i]));
-        }
+      let i;
+      for (i = 0; i < json.length; i += 1) {
+        arr.push(new Constr(json[i]));
+      }
 
-        return arr;
-      });
+      return arr;
+    });
   }
 
   toString(data) {
     return this.send(data)
-      .then(res => `${res}`);
+    .then(res => `${res}`);
   }
 
   toJson(data) {
     return this.send(data)
-      .then(res => JSON.parse(res));
+    .then(res => JSON.parse(res));
   }
 
   sendBrowser(data) {
@@ -490,7 +487,6 @@ class Request {
     }
     return this.sendBrowser(data);
   }
-
 }
 
 Request.defaults = {
@@ -504,7 +500,6 @@ Request.defaults = {
 };
 
 class Base {
-
   constructor(obj) {
     this.headers = {};
     this.rejectUnauthorized = null;
@@ -540,7 +535,6 @@ class Base {
 
     return req;
   }
-
 }
 
 module.exports = {
