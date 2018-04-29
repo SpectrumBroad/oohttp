@@ -1,6 +1,6 @@
 {
 	"name": "oohttp",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "object-oriented http(s) request handler",
 	"license": "MIT",
 	"repository": {
@@ -14,6 +14,10 @@
 		"http",
 		"https"
 	],
+	"scripts": {
+    "test": "./node_modules/.bin/mocha --exit",
+    "cov": "./node_modules/.bin/nyc ./node_modules/.bin/mocha --exit"
+  },
 	"browser": {
 		"https": false,
 		"http": false,
@@ -24,6 +28,11 @@
 		"eslint-plugin-import": "*",
 		"eslint-config-airbnb": "*",
 		"eslint-plugin-jsx-a11y": "*",
-		"eslint-plugin-react": "*"
+		"eslint-plugin-react": "*",
+		"express": "*",
+		"body-parser": "*",
+		"supertest": "*",
+		"mocha": "*",
+		"nyc": "*"
 	}
 }
