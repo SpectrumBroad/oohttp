@@ -102,17 +102,14 @@ class Url {
         returnObj.hostname = remainingPath || null;
       }
     } else {
-      const search = obj.search;
-      let query = obj.query;
-      const path = obj.path;
-      let pathname = obj.pathname;
+      const { path } = obj;
+      let { search, query, pathname } = obj;
 
       // path
       if (path && !pathname && !search && !query) {
         if (path.includes('?')) {
           const querySplit = path.split('?');
-          pathname = querySplit[0];
-          query = querySplit[1];
+          [pathname, search] = querySplit;
         } else {
           pathname = path;
         }
@@ -120,7 +117,7 @@ class Url {
 
       // querystring
       if (search && !query) {
-        returnObj.query = this.parseQueryString(search);
+        query = this.parseQueryString(search);
       }
 
       // protocol
@@ -134,8 +131,9 @@ class Url {
 
       returnObj.hostname = obj.hostname || null;
       returnObj.port = obj.port || null;
-      returnObj.pathname = obj.pathname || null;
-      returnObj.query = obj.query || {};
+      returnObj.pathname = pathname || null;
+      returnObj.query = query || {};
+      returnObj.hash = obj.hash || null;
     }
 
     return returnObj;
@@ -158,8 +156,7 @@ class Url {
     for (let i = 0; i < searchSplit.length; i += 1) {
       querySplit = searchSplit[i].split('=');
       if (querySplit.length === 2) {
-        queryName = querySplit[0];
-        queryValue = querySplit[1];
+        [queryName, queryValue] = querySplit;
         if (typeof query[queryName] === 'string') {
           query[queryName] = [query[queryName], queryValue];
         } else if (Array.isArray(query[queryName])) {
@@ -391,6 +388,7 @@ class Request {
     .then(res => JSON.parse(res));
   }
 
+  /* istanbul ignore next */
   sendBrowser(data) {
     return new Promise((resolve, reject) => {
       // setup a xmlhttprequest to handle the http request
