@@ -539,6 +539,13 @@ class Base {
     }
   }
 
+  /**
+   * Creates a Request object merged from this base.
+   * @param {String} method The method for this request.
+   * GET, POST, ...
+   * @param {String|Object|Url} reqUrl The url to request.
+   * @returns {Request}
+   */
   request(method, reqUrl) {
     if (!(reqUrl instanceof Url)) {
       reqUrl = new Url(reqUrl);
