@@ -331,17 +331,24 @@ class Request {
 
   /**
   * Parses the result through JSON and passes it to the given constructor.
-  * @param {Constructor} Constr The constructor
+  * @param {Constructor} Constr The constructor.
   * @param {Object} [data] An object to send along with the request.
   * If the content-type header is set to 'application/json',
   * than this data will be stringified through JSON.stringify().
   * Otherwise the data will be parsed as an url encoded form string
   * from the first-level key/value pairs.
-  * @returns {Promise.<Constr>} Returns a Promise with the constructed object on success.
+  * @returns {Promise.<Constr|null>} Returns a Promise with the constructed object on success,
+  * or null if a 404 was returned. Other status codes reject the promise.
   */
   toObject(Constr, data) {
     return this.send(data)
-    .then(res => new Constr(JSON.parse(res)));
+    .then(res => new Constr(JSON.parse(res)))
+    .catch((err) => {
+      if (err.statusCode === 404) {
+        return Promise.resolve(null);
+      }
+      return Promise.reject(err);
+    });
   }
 
   toObjectArray(Constr, data) {
