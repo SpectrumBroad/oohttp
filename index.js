@@ -366,6 +366,21 @@ class Request {
     });
   }
 
+  toObjectMap(Constr, data) {
+    return this.send(data)
+    .then((res) => {
+      const json = JSON.parse(res);
+      const map = {};
+
+      let key;
+      for (key in json) {
+        map[key] = new Constr(json[key]);
+      }
+
+      return map;
+    });
+  }
+
   toString(data) {
     return this.send(data)
     .then(res => `${res}`);
