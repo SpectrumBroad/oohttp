@@ -431,7 +431,14 @@ class Request {
     return new Promise((resolve, reject) => {
       const options = url.parse(this.url.toString());
       options.method = this.method || Request.defaults.method;
+
       options.headers = Object.assign({}, Request.defaults.headers, this.headers);
+      for (const key in options.headers) {
+        if (typeof options.headers[key] !== 'string' && typeof options.headers[key] !== 'number') {
+          delete options.headers[key];
+        }
+      }
+
       options.rejectUnauthorized = typeof this.rejectUnauthorized === 'boolean' ? this.rejectUnauthorized : Request.defaults.rejectUnauthorized;
 
       const protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
