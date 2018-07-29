@@ -28,7 +28,7 @@ Will request http://someurl?other=value&token=x with the given 'someHeader' head
 const base = new oohttp.Base('?token=x');
 base.headers['someHeader'] = 'value';
 
-base.request('http://someurl?other=value')
+base.get('http://someurl?other=value')
   .toJson()
   .then((jsonObj) => {
     console.log(jsonObj);
