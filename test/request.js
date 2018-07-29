@@ -7,7 +7,6 @@ const assert = require('assert');
 const oohttp = require('../index.js');
 const expressApp = require('express')();
 expressApp.use(require('body-parser').json());
-const http = require('http');
 
 const testArray = [
   {
@@ -113,7 +112,7 @@ describe('Request', function () {
       const req = new oohttp.Request('GET', 'http://localhost:9800/testMap');
       objs = await req.toObjectMap(Obj);
     });
-    
+
     it('should return a map of Obj instances', async function () {
       Object.keys(objs).forEach(key => assert(objs[key] instanceof Obj));
     });
@@ -145,7 +144,7 @@ describe('Request', function () {
       const req = new oohttp.Request('GET', 'http://localhost:9800/testObject');
 
       try {
-        obj = await req.toObject(testStr);
+        await req.toObject(testStr);
       } catch (err) {
         thrownErr = err;
       }
