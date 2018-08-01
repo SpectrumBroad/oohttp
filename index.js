@@ -315,6 +315,16 @@ Url.protocolPortNumbers = {
   wss: 443
 };
 
+class Response {
+  constructor(obj) {
+    if (obj) {
+      this.data = obj.data;
+      this.headers = obj.headers;
+      this.statusCode = obj.statusCode;
+    }
+  }
+}
+
 class Request {
   constructor(method, reqUrl) {
     this.open(method, reqUrl);
@@ -363,7 +373,7 @@ class Request {
   */
   toObject(Constr, data) {
     return this.send(data)
-    .then(res => new Constr(JSON.parse(res)))
+    .then(res => new Constr(JSON.parse(res.data)))
     .catch((err) => {
       if (err.statusCode === 404) {
         return Promise.resolve(null);
@@ -375,7 +385,7 @@ class Request {
   toObjectArray(Constr, data) {
     return this.send(data)
     .then((res) => {
-      const json = JSON.parse(res);
+      const json = JSON.parse(res.data);
       const arr = [];
 
       let i;
@@ -390,7 +400,7 @@ class Request {
   toObjectMap(Constr, data) {
     return this.send(data)
     .then((res) => {
-      const json = JSON.parse(res);
+      const json = JSON.parse(res.data);
       const map = {};
 
       let key;
@@ -404,12 +414,12 @@ class Request {
 
   toString(data) {
     return this.send(data)
-    .then(res => `${res}`);
+    .then(res => `${res.data}`);
   }
 
   toJson(data) {
     return this.send(data)
-    .then(res => JSON.parse(res));
+    .then(res => JSON.parse(res.data));
   }
 
   /* istanbul ignore next */
@@ -437,18 +447,47 @@ class Request {
       };
 
       req.onload = () => {
+        const resHeaders = Request.parseXmlHttpRequestHeaders(req);
         if (req.status >= 200 && req.status < 300) {
-          resolve(req.responseText);
+          resolve(new Response({
+            statusCode: req.status,
+            headers: resHeaders,
+            data: req.responseText
+          }));
         } else {
           const err = new Error('Unsuccessful statuscode returned');
           err.statusCode = req.status;
-          err.data = req.responseText;
+          err.res = new Response({
+            statusCode: req.status,
+            headers: resHeaders,
+            data: req.responseText
+          });
           reject(err);
         }
       };
 
       req.send(data);
     });
+  }
+
+  /* istanbul ignore next */
+  static parseXmlHttpRequestHeaders(req) {
+    const headerMap = {};
+    const headerStr = req.getAllResponseHeaders();
+    if (!headerStr) {
+      return headerMap;
+    }
+
+    const headerSplit = headerStr.split('\r\n');
+
+    for (let i = 0; i < headerSplit.length; i += 1) {
+      const colonIndex = headerSplit.indexOf(':');
+      if (colonIndex > -1) {
+        headerMap[headerSplit[i].substring(0, colonIndex)] = headerSplit[i].substring(colonIndex);
+      }
+    }
+
+    return headerMap;
   }
 
   sendNode(data) {
@@ -490,11 +529,19 @@ class Request {
 
         res.on('end', () => {
           if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(resData);
+            resolve(new Response({
+              statusCode: res.statusCode,
+              headers: res.headers,
+              data: resData
+            }));
           } else {
             const err = new Error('Unsuccessful statuscode returned');
             err.statusCode = res.statusCode;
-            err.data = resData;
+            err.res = new Response({
+              statusCode: res.statusCode,
+              headers: res.headers,
+              data: resData
+            });
             reject(err);
           }
         });
@@ -634,6 +681,7 @@ class Base {
 }
 
 module.exports = {
+  Response,
   Request,
   Base,
   Url
