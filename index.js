@@ -519,6 +519,11 @@ class Request {
     });
   }
 
+  proxy(proxyUrl) {
+    this.proxyUrl = proxyUrl;
+    return this;
+  }
+
   send(data) {
     if (data && typeof data !== 'string') {
       const contentType = this.headers['content-type'] || Request.defaults.headers['content-type'];
