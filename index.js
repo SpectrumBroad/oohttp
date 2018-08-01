@@ -39,7 +39,7 @@ function utf8ByteLength(str) {
 class Url {
   constructor(obj) {
     this.protocol = null;
-    this.auth = null;
+    // this.auth = null;
     this.hostname = null;
     this.port = null;
     this.pathname = null;
@@ -192,9 +192,11 @@ class Url {
       this.protocol = baseUrl.protocol;
     }
 
+    /*
     if (!this.auth && baseUrl.auth) {
       this.auth = baseUrl.auth;
     }
+    */
 
     if (!this.hostname && baseUrl.hostname) {
       this.hostname = baseUrl.hostname;
@@ -255,9 +257,11 @@ class Url {
       str += `${this.protocol}://`;
     }
 
+    /*
     if (this.auth) {
       str += `${this.auth}@`;
     }
+    */
 
     // hostname
     if (this.hostname) {
