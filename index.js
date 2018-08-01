@@ -453,7 +453,8 @@ class Request {
 
   sendNode(data) {
     return new Promise((resolve, reject) => {
-      const options = url.parse(this.url.toString());
+      const urlStr = this.url.toString();
+      const options = url.parse(urlStr);
       options.method = this.method || Request.defaults.method;
 
       options.headers = Object.assign({}, Request.defaults.headers, this.headers);
@@ -465,12 +466,22 @@ class Request {
 
       options.rejectUnauthorized = typeof this.rejectUnauthorized === 'boolean' ? this.rejectUnauthorized : Request.defaults.rejectUnauthorized;
 
-      const protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
+      let protocolName = options.protocol.substring(0, options.protocol.length - 1).toLowerCase();
       if (protocolName !== 'http' && protocolName !== 'https') {
         throw new Error(`unsupported protocol "${protocolName}"`);
       }
 
-      const req = (protocolName === 'https' ? https : http).request(options, (res) => {
+      let proxyOptions;
+      if (this.proxyUrl) {
+        proxyOptions = url.parse(this.proxyUrl);
+
+        proxyOptions.headers = options.headers;
+        proxyOptions.headers.Host = options.host;
+        proxyOptions.headers.path = urlStr;
+        protocolName = 'http';
+      }
+
+      const req = (protocolName === 'https' ? https : http).request(proxyOptions || options, (res) => {
         res.setEncoding('utf8');
         let resData = '';
         res.on('data', (chunk) => {
