@@ -30,8 +30,7 @@
 		"eslint-plugin-jsx-a11y": "*",
 		"eslint-plugin-react": "*",
 		"express": "*",
-		"body-parser": "*",
-		"supertest": "*",
+		"http-proxy": "*",
 		"mocha": "*",
 		"nyc": "*"
 	}
