@@ -552,6 +552,8 @@ class Request {
     if (typeof window === 'undefined') {
       return this.sendNode(data);
     }
+
+    /* istanbul ignore next */
     return this.sendBrowser(data);
   }
 }
