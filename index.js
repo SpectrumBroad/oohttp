@@ -330,6 +330,26 @@ class Request {
     }
   }
 
+  static get(reqUrl) {
+    return new Request('GET', reqUrl);
+  }
+
+  static post(reqUrl) {
+    return new Request('POST', reqUrl);
+  }
+
+  static put(reqUrl) {
+    return new Request('PUT', reqUrl);
+  }
+
+  static delete(reqUrl) {
+    return new Request('DELETE', reqUrl);
+  }
+
+  static patch(reqUrl) {
+    return new Request('PATCH', reqUrl);
+  }
+
   /**
   * Parses the result through JSON and passes it to the given constructor.
   * @param {Constructor} Constr The constructor.
