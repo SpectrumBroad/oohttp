@@ -593,6 +593,26 @@ class Base {
 
     return req;
   }
+
+  get(reqUrl) {
+    return this.request('GET', reqUrl);
+  }
+
+  post(reqUrl) {
+    return this.request('POST', reqUrl);
+  }
+
+  put(reqUrl) {
+    return this.request('PUT', reqUrl);
+  }
+
+  delete(reqUrl) {
+    return this.request('DELETE', reqUrl);
+  }
+
+  patch(reqUrl) {
+    return this.request('PATCH', reqUrl);
+  }
 }
 
 module.exports = {
