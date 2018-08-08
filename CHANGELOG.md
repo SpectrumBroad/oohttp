@@ -12,6 +12,6 @@ Nothing notable at the moment.
 
 -   Support for `basic` proxy authorization.
 
-[Unreleased]: https://github.com/SpectrumBroad/xible/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/SpectrumBroad/xible/compare/v1.0.0...v1.1.0
+[Unreleased]: https://github.com/SpectrumBroad/oohttp/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/SpectrumBroad/oohttp/compare/v1.0.0...v1.1.0
 
