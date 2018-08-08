@@ -3,6 +3,8 @@ All notable changes to the [oohttp library](https://github.com/SpectrumBroad/ooh
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+## [Unreleased][]
+Nothing notable at the moment.
 
 ## [1.1.0][]
 ### Added
