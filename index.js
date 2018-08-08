@@ -515,6 +515,11 @@ class Request {
         proxyOptions = url.parse(this.proxyUrl);
 
         proxyOptions.headers = options.headers;
+        if (proxyOptions.auth) {
+          proxyOptions.headers['Proxy-Authorization'] = `Basic ${Buffer.from(proxyOptions.auth).toString('base64')}`;
+          proxyOptions.auth = null;
+        }
+
         proxyOptions.headers.Host = options.host;
         proxyOptions.headers.path = urlStr;
         protocolName = 'http';

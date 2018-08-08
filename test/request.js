@@ -78,6 +78,12 @@ expressUrlEncodedApp.post('/testPostBody', (req, res) => {
 const proxyServer = httpProxy.createProxyServer();
 const proxyWebserver = require('http').createServer((req, res) => {
   res.setHeader('proxy-test', 'true');
+
+  const authHeader = req.headers['proxy-authorization'];
+  if (authHeader) {
+    res.setHeader('proxy-auth', authHeader);
+  }
+
   proxyServer.web(req, res, {
     target: req.headers.path
   });
@@ -370,7 +376,7 @@ describe('Request', function () {
   });
 
   describe('proxy', function () {
-    describe('req.proxyUrl', function() {
+    describe('req.proxyUrl', function () {
       let res;
       before(async function () {
         const req = oohttp.Request.get('http://localhost:9800/testObject');
@@ -383,23 +389,28 @@ describe('Request', function () {
       });
     });
 
-    describe('req.proxy()', function() {
+    describe('req.proxy()', function () {
       let req;
       before(function () {
         req = oohttp.Request.get('http://localhost:9800/testObject');
       });
 
-      it('should chain', function() {
-        assert.equal(req.proxy('http://localhost:9802'), req);
+      it('should chain', function () {
+        assert.equal(req.proxy('http://testusr:testpwd@localhost:9802'), req);
       });
 
-      it('should set proxyUrl', function() {
-        assert.equal(req.proxyUrl, 'http://localhost:9802');
+      it('should set proxyUrl', function () {
+        assert.equal(req.proxyUrl, 'http://testusr:testpwd@localhost:9802');
       });
 
       it('should have proxy header', async function () {
         const res = await req.send();
         assert.equal(res.headers['proxy-test'], 'true');
+      });
+
+      it('should have proxy-auth header', async function () {
+        const res = await req.send();
+        assert.equal(res.headers['proxy-auth'], 'Basic dGVzdHVzcjp0ZXN0cHdk');
       });
     });
   });
