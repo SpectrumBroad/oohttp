@@ -372,17 +372,34 @@ class Request {
   * or null if a 404 was returned. Other status codes reject the promise.
   */
   toObject(Constr, data) {
+    return this.toFunction((obj) => {
+      if (obj === null) {
+        return obj;
+      }
+      return new Constr(obj);
+    }, data);
+  }
+
+  toObjectArray(Constr, data) {
+    return this.toFunctionArray(obj => new Constr(obj), data);
+  }
+
+  toObjectMap(Constr, data) {
+    return this.toFunctionMap(obj => new Constr(obj), data);
+  }
+
+  toFunction(fn, data) {
     return this.send(data)
-    .then(res => new Constr(JSON.parse(res.data)))
+    .then(res => fn(JSON.parse(res.data)))
     .catch((err) => {
       if (err.statusCode === 404) {
-        return Promise.resolve(null);
+        return Promise.resolve(fn(null));
       }
       return Promise.reject(err);
     });
   }
 
-  toObjectArray(Constr, data) {
+  toFunctionArray(fn, data) {
     return this.send(data)
     .then((res) => {
       const json = JSON.parse(res.data);
@@ -390,14 +407,14 @@ class Request {
 
       let i;
       for (i = 0; i < json.length; i += 1) {
-        arr.push(new Constr(json[i]));
+        arr.push(fn(json[i]));
       }
 
       return arr;
     });
   }
 
-  toObjectMap(Constr, data) {
+  toFunctionMap(fn, data) {
     return this.send(data)
     .then((res) => {
       const json = JSON.parse(res.data);
@@ -405,7 +422,7 @@ class Request {
 
       let key;
       for (key in json) {
-        map[key] = new Constr(json[key]);
+        map[key] = fn(json[key]);
       }
 
       return map;

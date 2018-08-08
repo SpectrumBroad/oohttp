@@ -123,6 +123,27 @@ oohttp.Request.get('http://someurl/api/objects')
   });
 ```
 
+## Passing results through a function
+```javascript
+const oohttp = require('oohttp');
+
+class SomeClass {
+  constructor(obj) {
+    if(obj) {
+      Object.assign(this, obj);
+    }
+  }
+}
+
+oohttp.Request.get('http://someurl/api/objects')
+  .toFunctionArray((obj) => {
+    return new SomeClass(obj);
+  })
+  .then((someObjArray) => {
+    console.log(someObjArray);
+  });
+```
+
 # Defaults
 All requests inherit these default properties at the time the request is done.
 
