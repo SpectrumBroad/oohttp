@@ -157,6 +157,9 @@ class Url {
       querySplit = searchSplit[i].split('=');
       if (querySplit.length === 2) {
         [queryName, queryValue] = querySplit;
+        queryName = decodeURIComponent(queryName);
+        queryValue = decodeURIComponent(queryValue);
+
         if (typeof query[queryName] === 'string') {
           query[queryName] = [query[queryName], queryValue];
         } else if (Array.isArray(query[queryName])) {

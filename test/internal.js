@@ -74,14 +74,14 @@ describe('Url', function () {
   });
 
   describe('.parse("str?#")', function () {
-    const url = new oohttp.Url('https://test.test.test/test?woot=meuq&blaat=woot&woot=meuq2&woot=meuq3#strHash');
+    const url = new oohttp.Url('https://test.test.test/test?woot=meuq&blaat=woot%20etc&woot=meuq2&woot=meuq3#strHash');
 
     it('should have pathname', function () {
       assert.strictEqual(url.pathname, '/test');
     });
 
     it('should have query', function () {
-      assert.deepStrictEqual(url.query, { woot: ['meuq', 'meuq2', 'meuq3'], blaat: 'woot' });
+      assert.deepStrictEqual(url.query, { woot: ['meuq', 'meuq2', 'meuq3'], blaat: 'woot etc' });
     });
 
     it('should have hostname', function () {
@@ -97,7 +97,7 @@ describe('Url', function () {
     });
 
     it('toString should be correct', function () {
-      assert.strictEqual(url.toString(), 'https://test.test.test/test?woot=meuq&woot=meuq2&woot=meuq3&blaat=woot#strHash');
+      assert.strictEqual(url.toString(), 'https://test.test.test/test?woot=meuq&woot=meuq2&woot=meuq3&blaat=woot%20etc#strHash');
     });
   });
 
