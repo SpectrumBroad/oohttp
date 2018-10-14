@@ -229,9 +229,7 @@ class Url {
               this.query[baseQueryName] = [this.query[baseQueryName]];
             }
             if (Array.isArray(baseQueryValue)) {
-              for (let j = 0; j < baseQueryValue.length; j += 1) {
-                this.query[baseQueryName].push(baseQueryValue[j]);
-              }
+              this.query[baseQueryName] = this.query[baseQueryName].concat(baseQueryValue);
             } else {
               this.query[baseQueryName].push(baseQueryValue);
             }

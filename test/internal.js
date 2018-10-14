@@ -160,9 +160,9 @@ describe('Url', function () {
 
     describe('mergeFrom("url")', function () {
       it('toString should be correct', function () {
-        const url = new oohttp.Url('https://:1234/pathname?query=str&test=test2');
-        url.mergeFrom('http://test.test.test?query=string');
-        assert.strictEqual(url.toString(), 'https://test.test.test:1234/pathname?query=str&query=string&test=test2');
+        const url = new oohttp.Url('https://:1234/pathname?query=str&test=test2&test=test3');
+        url.mergeFrom('http://test.test.test?query=string&test=test4&test=test5');
+        assert.strictEqual(url.toString(), 'https://test.test.test:1234/pathname?query=str&query=string&test=test2&test=test3&test=test4&test=test5');
       });
 
       it('toString should be correct', function () {
