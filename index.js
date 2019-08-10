@@ -179,6 +179,7 @@ class Url {
   * @param {Url} baseUrl The url to merge from.
   */
   mergeFrom(baseUrl) {
+    // eslint-disable-next-line no-use-before-define
     if ((baseUrl instanceof Base) || (baseUrl instanceof Request)) {
       baseUrl = baseUrl.url;
     }
@@ -267,8 +268,8 @@ class Url {
     // hostname
     if (this.hostname) {
       str += `${this.hostname}`;
-      if (this.port &&
-        (!this.protocol || Url.protocolPortNumbers[this.protocol] !== this.port)
+      if (this.port
+        && (!this.protocol || Url.protocolPortNumbers[this.protocol] !== this.port)
       ) {
         str += `:${this.port}`;
       }
@@ -382,62 +383,62 @@ class Request {
   }
 
   toObjectArray(Constr, data) {
-    return this.toFunctionArray(obj => new Constr(obj), data);
+    return this.toFunctionArray((obj) => new Constr(obj), data);
   }
 
   toObjectMap(Constr, data) {
-    return this.toFunctionMap(obj => new Constr(obj), data);
+    return this.toFunctionMap((obj) => new Constr(obj), data);
   }
 
   toFunction(fn, data) {
     return this.send(data)
-    .then(res => fn(JSON.parse(res.data)))
-    .catch((err) => {
-      if (err.statusCode === 404) {
-        return Promise.resolve(fn(null));
-      }
-      return Promise.reject(err);
-    });
+      .then((res) => fn(JSON.parse(res.data)))
+      .catch((err) => {
+        if (err.statusCode === 404) {
+          return Promise.resolve(fn(null));
+        }
+        return Promise.reject(err);
+      });
   }
 
   toFunctionArray(fn, data) {
     return this.send(data)
-    .then((res) => {
-      const json = JSON.parse(res.data);
-      const arr = [];
+      .then((res) => {
+        const json = JSON.parse(res.data);
+        const arr = [];
 
-      let i;
-      for (i = 0; i < json.length; i += 1) {
-        arr.push(fn(json[i]));
-      }
+        let i;
+        for (i = 0; i < json.length; i += 1) {
+          arr.push(fn(json[i]));
+        }
 
-      return arr;
-    });
+        return arr;
+      });
   }
 
   toFunctionMap(fn, data) {
     return this.send(data)
-    .then((res) => {
-      const json = JSON.parse(res.data);
-      const map = {};
+      .then((res) => {
+        const json = JSON.parse(res.data);
+        const map = {};
 
-      let key;
-      for (key in json) {
-        map[key] = fn(json[key]);
-      }
+        let key;
+        for (key in json) {
+          map[key] = fn(json[key]);
+        }
 
-      return map;
-    });
+        return map;
+      });
   }
 
   toString(data) {
     return this.send(data)
-    .then(res => `${res.data}`);
+      .then((res) => `${res.data}`);
   }
 
   toJson(data) {
     return this.send(data)
-    .then(res => JSON.parse(res.data));
+      .then((res) => JSON.parse(res.data));
   }
 
   /* istanbul ignore next */
@@ -449,7 +450,7 @@ class Request {
       req.timeout = this.timeout || Request.defaults.timeout;
 
       // set the headers
-      const headers = Object.assign({}, Request.defaults.headers, this.headers);
+      const headers = { ...Request.defaults.headers, ...this.headers };
       Object.keys(headers).forEach((headerName) => {
         if (typeof headers[headerName] === 'string' || typeof headers[headerName] === 'number') {
           req.setRequestHeader(headerName, headers[headerName]);
@@ -514,7 +515,7 @@ class Request {
       const options = url.parse(urlStr);
       options.method = this.method || Request.defaults.method;
 
-      options.headers = Object.assign({}, Request.defaults.headers, this.headers);
+      options.headers = { ...Request.defaults.headers, ...this.headers };
       for (const key in options.headers) {
         if (typeof options.headers[key] !== 'string' && typeof options.headers[key] !== 'number') {
           delete options.headers[key];
@@ -612,9 +613,9 @@ class Request {
     }
 
     // auto setting of content-length header
-    if (data && !this.headers['content-length'] &&
-      ((typeof this.autoContentLength !== 'boolean' && Request.defaults.autoContentLength === true) ||
-      this.autoContentLength === true)
+    if (data && !this.headers['content-length']
+      && ((typeof this.autoContentLength !== 'boolean' && Request.defaults.autoContentLength === true)
+      || this.autoContentLength === true)
     ) {
       this.headers['content-length'] = utf8ByteLength(data);
     }

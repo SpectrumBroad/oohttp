@@ -26,9 +26,7 @@
 	"devDependencies": {
 		"eslint": "*",
 		"eslint-plugin-import": "*",
-		"eslint-config-airbnb": "*",
-		"eslint-plugin-jsx-a11y": "*",
-		"eslint-plugin-react": "*",
+		"eslint-config-airbnb-base": "*",
 		"express": "*",
 		"http-proxy": "*",
 		"mocha": "*",

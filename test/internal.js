@@ -125,7 +125,7 @@ describe('Url', function () {
     });
   });
 
-  describe('.parseQueryString(undefined)', function() {
+  describe('.parseQueryString(undefined)', function () {
     it('should not parse no querystring', function () {
       assert.deepStrictEqual(oohttp.Url.parseQueryString(), {});
     });

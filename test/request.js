@@ -4,9 +4,10 @@
 /* eslint-disable prefer-arrow-callback */
 
 const assert = require('assert');
-const oohttp = require('../index.js');
+const http = require('http');
 const express = require('express');
 const httpProxy = require('http-proxy');
+const oohttp = require('../index.js');
 
 const expressApp = express();
 expressApp.use(express.json());
@@ -76,7 +77,7 @@ expressUrlEncodedApp.post('/testPostBody', (req, res) => {
 
 // proxy
 const proxyServer = httpProxy.createProxyServer();
-const proxyWebserver = require('http').createServer((req, res) => {
+const proxyWebserver = http.createServer((req, res) => {
   res.setHeader('proxy-test', 'true');
 
   const authHeader = req.headers['proxy-authorization'];
@@ -137,7 +138,7 @@ describe('Request', function () {
     });
 
     it('should return a list of Obj instances', async function () {
-      objs.forEach(obj => assert(obj instanceof Obj));
+      objs.forEach((obj) => assert(obj instanceof Obj));
     });
 
     it('should have assigned objects', async function () {
@@ -181,7 +182,7 @@ describe('Request', function () {
     });
 
     it('should return a map of Obj instances', async function () {
-      Object.keys(objs).forEach(key => assert(objs[key] instanceof Obj));
+      Object.keys(objs).forEach((key) => assert(objs[key] instanceof Obj));
     });
 
     it('should have assigned objects', async function () {
@@ -383,7 +384,7 @@ describe('Request', function () {
         req.proxyUrl = 'http://localhost:9802';
         res = await req.send();
       });
-  
+
       it('should have proxy header', function () {
         assert.equal(res.headers['proxy-test'], 'true');
       });

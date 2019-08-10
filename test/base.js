@@ -4,8 +4,8 @@
 /* eslint-disable prefer-arrow-callback */
 
 const assert = require('assert');
-const oohttp = require('../index.js');
 const expressApp = require('express')();
+const oohttp = require('../index.js');
 
 const testObject = {
   name: 'testObject'
@@ -25,7 +25,7 @@ class Obj {
 let expressServer;
 
 describe('Base', function () {
-  let base = new oohttp.Base('http://localhost');
+  const base = new oohttp.Base('http://localhost');
   before(function () {
     expressServer = expressApp.listen(9800);
   });
@@ -34,13 +34,13 @@ describe('Base', function () {
     expressServer.close();
   });
 
-  describe('passing object as argument', function() {
+  describe('passing object as argument', function () {
     const newBase = new oohttp.Base({
       url: 'http://127.0.0.1/',
       autoContentLength: true
     });
 
-    it('should assign properties', function() {
+    it('should assign properties', function () {
       assert.equal(newBase.autoContentLength, true);
       assert(newBase.url instanceof oohttp.Url);
       assert.equal(newBase.url.toString(), 'http://127.0.0.1/');
@@ -122,10 +122,10 @@ describe('Base', function () {
     });
   });
 
-  describe('base.url = str', function() {
+  describe('base.url = str', function () {
     base.url = 'http://127.0.0.1';
 
-    it('should be parsed as Url when Request object is created', function() {
+    it('should be parsed as Url when Request object is created', function () {
       const req = base.get('/something');
 
       assert(req.url instanceof oohttp.Url);

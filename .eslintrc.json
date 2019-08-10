@@ -1,9 +1,9 @@
 {
   "parserOptions": {
-    "ecmaVersion": 8,
+    "ecmaVersion": 2018,
     "sourceType": "script"
   },
-  "extends": "airbnb",
+  "extends": "airbnb-base",
   "env": {
     "browser": true,
     "node": true,
@@ -22,7 +22,8 @@
     "no-continue": "off",
     "guard-for-in": "off",
     "no-restricted-syntax": ["off"],
-    "no-param-reassign": "off"
+    "no-param-reassign": "off",
+    "max-classes-per-file": [1, 5]
   },
   "plugins": [
     "import"
