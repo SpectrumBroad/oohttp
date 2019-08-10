@@ -7,7 +7,7 @@ http(s) request handler for nodejs and the browser. Supports baseUrls and direct
 <pre><code>npm install oohttp --only=prod</code></pre>
 
 ## Browser
-The provided index.js can be used directly in the browser if it supports ECMAscript 2015 (and higher). For older browser you will need to transpile.
+The provided index.js can be used directly in the browser if it supports ECMAscript 2018 (and higher). For older browser you will need to transpile.
 
 # Examples
 
