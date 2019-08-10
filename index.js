@@ -719,9 +719,11 @@ class Base {
   }
 }
 
-module.exports = {
-  Response,
-  Request,
-  Base,
-  Url
-};
+if (typeof window === 'undefined') {
+  module.exports = {
+    Response,
+    Request,
+    Base,
+    Url
+  };
+}
