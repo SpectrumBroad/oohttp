@@ -4,7 +4,7 @@ http(s) request handler for nodejs and the browser. Supports baseUrls and direct
 # Installation
 
 ## Node.js
-<pre><code>npm install oohttp --only=prod</code></pre>
+<pre><code>npm install oohttp</code></pre>
 
 ## Browser
 The provided index.js can be used directly in the browser if it supports ECMAscript 2018 (and higher). For older browser you will need to transpile.
