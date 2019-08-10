@@ -645,6 +645,7 @@ class Base {
     this.rejectUnauthorized = null;
     this.timeout = null;
     this.autoContentLength = null;
+    this.Request = Request;
 
     if (typeof obj === 'string' || (obj instanceof Url)) {
       this.url = obj;
@@ -673,7 +674,7 @@ class Base {
       baseUrl = new Url(baseUrl);
     }
     reqUrl.mergeFrom(baseUrl);
-    const req = new Request(method, reqUrl.toString());
+    const req = new this.Request(method, reqUrl.toString());
 
     Object.assign(req.headers, this.headers);
     req.rejectUnauthorized = this.rejectUnauthorized;
