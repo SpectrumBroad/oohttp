@@ -366,10 +366,7 @@ class Request {
   * Parses the result through JSON and passes it to the given constructor.
   * @param {Constructor} Constr The constructor.
   * @param {Object} [data] An object to send along with the request.
-  * If the content-type header is set to 'application/json',
-  * than this data will be stringified through JSON.stringify().
-  * Otherwise the data will be parsed as an url encoded form string
-  * from the first-level key/value pairs.
+  * This data argument is processed through Request.createSendBody().
   * @returns {Promise.<Constr|null>} Returns a Promise with the constructed object on success,
   * or null if a 404 was returned. Other status codes reject the promise.
   */
@@ -595,7 +592,18 @@ class Request {
     return this;
   }
 
-  send(data) {
+  /**
+   * Creates a stringified version of the input data,
+   * so it can be sent to the server.
+   * If the data is already a string, that string will be returned.
+   * Otherwise, if the content-type header is set to 'application/json',
+   * than this data will be stringified through JSON.stringify().
+   * Otherwise the data will be parsed as an url encoded form string
+   * from the first-level key/value pairs.
+   * @param {Object|String} data The data to be stringified.
+   * @returns {String}
+   */
+  createSendBody(data) {
     if (data && typeof data !== 'string') {
       const contentType = this.headers['content-type'] || Request.defaults.headers['content-type'];
       if (contentType === 'application/json') {
@@ -612,20 +620,26 @@ class Request {
       }
     }
 
+    return data;
+  }
+
+  send(data) {
+    const sendBody = this.createSendBody(data);
+
     // auto setting of content-length header
-    if (data && !this.headers['content-length']
+    if (sendBody && !this.headers['content-length']
       && ((typeof this.autoContentLength !== 'boolean' && Request.defaults.autoContentLength === true)
       || this.autoContentLength === true)
     ) {
-      this.headers['content-length'] = utf8ByteLength(data);
+      this.headers['content-length'] = utf8ByteLength(sendBody);
     }
 
     if (typeof window === 'undefined') {
-      return this.sendNode(data);
+      return this.sendNode(sendBody);
     }
 
     /* istanbul ignore next */
-    return this.sendBrowser(data);
+    return this.sendBrowser(sendBody);
   }
 }
 
