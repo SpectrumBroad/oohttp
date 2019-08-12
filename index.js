@@ -719,7 +719,7 @@ class Base {
   }
 }
 
-if (typeof window === 'undefined') {
+if (typeof module === 'object' && module.exports) {
   module.exports = {
     Response,
     Request,
